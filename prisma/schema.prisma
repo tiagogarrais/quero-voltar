@@ -9,8 +9,8 @@ datasource db {
 
 // Modelo baseado no esquema recomendado para NextAuth + Prisma
 model Account {
-  id                 Int       @id @default(autoincrement())
-  userId             Int
+  id                 String    @id @default(cuid())
+  userId             String
   type               String
   provider           String
   providerAccountId  String
@@ -28,20 +28,27 @@ model Account {
 }
 
 model Session {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(cuid())
   sessionToken String   @unique
-  userId       Int
+  userId       String
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
+  id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  // Novos campos para perfil
+  fullName      String?   // Nome completo editável
+  birthDate     DateTime? // Data de nascimento
+  cpf           String?   @unique // CPF único
+  whatsapp      String?   // Número de WhatsApp (opcional)
+  whatsappCountryCode String? @default("55") // Código DDI do país (padrão Brasil)
+  whatsappConsent Boolean @default(false) // Consentimento para comunicações
   accounts      Account[]
   sessions      Session[]
 }

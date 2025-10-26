@@ -64,7 +64,7 @@ Scripts úteis
 Prisma
 
 - Schema em `prisma/schema.prisma`. Ele já contém os modelos usados pelo NextAuth (User, Account, Session, VerificationToken).
-- Para adicionar modelos (ex.: Shop, Purchase, Coupon), atualize `schema.prisma`, gere o client (`npx prisma generate`) e crie nova migração (`npx prisma migrate dev --name add-coupons`).
+- Para adicionar novos modelos (ex.: Shop, Purchase, Coupon), atualize `schema.prisma`, gere o client (`npx prisma generate`) e crie nova migração (`npx prisma migrate dev --name add-models`).
 
 NextAuth / Autenticação
 
@@ -110,10 +110,205 @@ Segurança
 
 Próximos passos técnicos sugeridos
 
-- Modelagem de dados para Shops / Purchases / Coupons (posso criar os modelos e as migrações).
+- Modelagem de dados para futuras funcionalidades (Shops, Purchases, Coupons).
 - Endpoints API para registrar compras, listar cupons e validar/resgatar cupom.
 - Painel administrativo para lojas.
 
 ---
+
+## Arquitetura e Implementação Técnica
+
+### Estrutura do Projeto
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── auth/[...nextauth]/route.js    # Configuração NextAuth (App Router)
+│   │   ├── countries/route.js             # API de países para WhatsApp
+│   │   └── profile/                       # API de perfil do usuário
+│   │       └── route.js
+│   ├── globals.css                        # Estilos globais
+│   ├── layout.js                          # Layout global (header/footer fixos)
+│   ├── page.js                            # Página inicial
+│   └── profile/
+│       └── page.js                        # Página de perfil/cadastro
+├── lib/
+│   ├── auth.js                            # Configuração NextAuth
+│   └── prisma.js                          # Cliente Prisma
+└── prisma/
+    └── schema.prisma                      # Schema do banco de dados
+```
+
+### APIs Implementadas
+
+#### `/api/auth/[...nextauth]`
+
+- **Framework**: NextAuth.js 4.22.1
+- **Provedores**: Google OAuth, Magic Link (Email)
+- **Adaptador**: Prisma Adapter
+- **Sessões**: Database sessions com JWT
+
+#### `/api/profile`
+
+- **GET**: Retorna dados do perfil do usuário autenticado
+- **PUT**: Atualiza perfil com validações completas
+- **Validações**:
+  - Nome: obrigatório, mínimo 2 caracteres
+  - CPF: obrigatório, algoritmo de validação brasileiro completo
+  - Data de nascimento: obrigatório, idade 18-120 anos
+  - WhatsApp: opcional com máscara por país
+
+#### `/api/countries`
+
+- **GET**: Lista de países com códigos DDI para WhatsApp
+- **Formato**: JSON com campos `ddi` e `pais`
+
+### Validações Técnicas
+
+#### Algoritmo de Validação CPF
+
+```javascript
+function isValidCPF(cpf) {
+  // Remove caracteres não numéricos
+  cpf = cpf.replace(/[^\d]/g, "");
+
+  // Verifica 11 dígitos e não todos iguais
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+
+  // Cálculo dos dígitos verificadores
+  // Primeiro dígito
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder !== parseInt(cpf.charAt(9))) return false;
+
+  // Segundo dígito
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder !== parseInt(cpf.charAt(10))) return false;
+
+  return true;
+}
+```
+
+### Componentes e Funcionalidades
+
+#### Layout Global (`layout.js`)
+
+- **Header Fixo**: Navegação com logo e links condicionais
+- **Footer Fixo**: Copyright e informações da plataforma
+- **Responsividade**: Layout centralizado com max-width 1200px
+- **Espaçamento**: Margens automáticas para conteúdo (80px top, 60px bottom)
+
+#### Formulários
+
+- **InputMask**: Para CPF (`999.999.999-99`) e telefone
+- **Validação**: Frontend e backend com mensagens específicas
+- **Estado**: useState para gerenciamento de formulários
+- **Feedback**: Exibição de erros em caixa vermelha estilizada
+
+#### Autenticação
+
+- **Proteção de Rotas**: `getServerSession` em APIs
+- **Redirecionamento**: Condicional baseado em estado de autenticação
+- **Fallback**: Dados de sessão como backup para perfil
+
+### Estilos e UI
+
+- **CSS-in-JS**: Estilos inline para componentes
+- **Paleta de Cores**:
+  - Primária: `#007bff` (azul)
+  - Secundária: `#dc3545` (vermelho)
+  - Sucesso: `#28a745` (verde)
+  - Cinza: `#6c757d`
+- **Layout**: Flexbox para responsividade
+- **Tipografia**: Arial como fonte padrão
+
+### Banco de Dados (Prisma Schema)
+
+```prisma
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String?
+  fullName          String?
+  birthDate         DateTime?
+  cpf               String?  @unique
+  whatsapp          String?
+  whatsappCountryCode String? @default("55")
+  whatsappConsent   Boolean? @default(false)
+  emailVerified     DateTime?
+  accounts          Account[]
+  sessions          Session[]
+}
+
+// Modelos NextAuth (Account, Session, VerificationToken) incluídos automaticamente
+```
+
+### Desenvolvimento e Build
+
+#### Scripts do Package.json
+
+```json
+{
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  }
+}
+```
+
+#### Dependências Principais
+
+```json
+{
+  "@next-auth/prisma-adapter": "^1.0.5",
+  "@prisma/client": "^6.18.0",
+  "next": "^14.0.0",
+  "next-auth": "^4.22.1",
+  "nodemailer": "^6.9.4",
+  "pg": "^8.11.0",
+  "prisma": "^6.18.0",
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-input-mask": "^2.0.4"
+}
+```
+
+### Segurança e Boas Práticas
+
+- **Validação de Input**: Tanto no frontend quanto backend
+- **Sanitização**: Remoção de caracteres especiais onde necessário
+- **Autenticação**: Sessões seguras com NextAuth
+- **HTTPS**: Recomendado para produção
+- **Variáveis de Ambiente**: Segredos nunca no código
+
+### Performance
+
+- **Next.js 14**: App Router com otimizações automáticas
+- **Build Estático**: Páginas estáticas onde possível
+- **Lazy Loading**: Componentes carregados sob demanda
+- **Bundle Size**: Otimizado com tree-shaking
+
+### Testes e Qualidade
+
+- **Build**: Verificação automática em CI/CD
+- **Linting**: ESLint configurado (quando disponível)
+- **TypeScript**: Verificação de tipos (planejado)
+- **Testes**: Estrutura preparada para testes unitários
+
+---
+
+_Última atualização: Outubro 2025_</content>
+<parameter name="oldString">---
 
 Se quiser, eu crio agora os modelos Prisma para Lojas, Compras e Cupons e gero a migração (posso aplicar automaticamente se você confirmar).
