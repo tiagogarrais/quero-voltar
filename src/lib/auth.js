@@ -39,6 +39,8 @@ export const authOptions = {
         console.log("SignIn callback:", {
           user: user?.email,
           account: account?.provider,
+          userId: user?.id,
+          userIdType: typeof user?.id
         });
         return true;
       } catch (error) {
@@ -49,6 +51,7 @@ export const authOptions = {
     async session({ session, token }) {
       try {
         if (token && token.id) {
+          console.log("Session callback - token.id:", token.id, "type:", typeof token.id);
           session.user.id = token.id;
           // Adicionar campos do perfil
           try {
@@ -81,6 +84,7 @@ export const authOptions = {
     async jwt({ token, user }) {
       try {
         if (user) {
+          console.log("JWT callback - user.id:", user.id, "type:", typeof user.id);
           token.id = user.id;
         }
         return token;
@@ -88,6 +92,6 @@ export const authOptions = {
         console.error("Erro no callback JWT:", error);
         return token;
       }
-    },
+    }
   },
 };
