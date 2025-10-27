@@ -352,7 +352,26 @@ npx prisma generate
 1. **Health Check**: `GET /api/health`
 2. **Logs do Vercel**: Verificar function logs
 3. **Variáveis de Ambiente**: Confirmar todas configuradas
-4. **Banco**: Verificar conexão e tabelas</content>
+4. **Banco**: Verificar conexão e tabelas
+
+#### Problema: "Null constraint violation on the fields: (`id`)"
+**Causa:** NextAuth tentando criar usuário sem ID válido
+**Solução:** Implementar CustomPrismaAdapter
+```javascript
+const CustomPrismaAdapter = (p) => {
+  const adapter = PrismaAdapter(p);
+  return {
+    ...adapter,
+    createUser: async (data) => {
+      const userData = {
+        ...data,
+        id: randomUUID(),
+      };
+      return p.user.create({ data: userData });
+    },
+  };
+};
+```</content>
    <parameter name="oldString">---
 
 Se quiser, eu crio agora os modelos Prisma para Lojas, Compras e Cupons e gero a migração (posso aplicar automaticamente se você confirmar).
