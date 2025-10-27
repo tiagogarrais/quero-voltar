@@ -7,6 +7,7 @@ import { sendVerificationRequest } from "@/lib/email";
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
+  debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -33,6 +34,15 @@ export const authOptions = {
     // you can customize sign in/out/error etc here
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      try {
+        console.log("SignIn callback:", { user: user?.email, account: account?.provider });
+        return true;
+      } catch (error) {
+        console.error("Erro no callback signIn:", error);
+        return false;
+      }
+    },
     async session({ session, token }) {
       try {
         if (token && token.id) {
