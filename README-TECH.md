@@ -355,9 +355,11 @@ npx prisma generate
 4. **Banco**: Verificar conexão e tabelas
 
 #### Problema: "Null constraint violation on the fields: (`id`)"
+
 **Causa:** NextAuth tentando criar usuário sem ID válido
 **Solução:** Implementar CustomPrismaAdapter
-```javascript
+
+````javascript
 const CustomPrismaAdapter = (p) => {
   const adapter = PrismaAdapter(p);
   return {
@@ -375,3 +377,4 @@ const CustomPrismaAdapter = (p) => {
    <parameter name="oldString">---
 
 Se quiser, eu crio agora os modelos Prisma para Lojas, Compras e Cupons e gero a migração (posso aplicar automaticamente se você confirmar).
+````
