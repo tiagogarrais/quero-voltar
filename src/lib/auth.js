@@ -14,12 +14,22 @@ const CustomPrismaAdapter = (p) => {
     ...adapter,
     createUser: async (data) => {
       console.log("Creating user with data:", data);
-      // Garantir que o ID seja gerado como UUID
+      // Garantir que o ID seja gerado como UUID e seja uma string
       const userData = {
         ...data,
-        id: randomUUID(),
+        id: typeof data.id === 'string' ? data.id : randomUUID(),
       };
       console.log("User data with ID:", userData);
+      console.log("ID type:", typeof userData.id, "ID value:", userData.id);
+
+      // Verificar se o ID é realmente uma string UUID válida
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(userData.id)) {
+        console.error("ID gerado não é um UUID válido:", userData.id);
+        userData.id = randomUUID();
+        console.log("Novo ID gerado:", userData.id);
+      }
+
       return p.user.create({ data: userData });
     },
   };
