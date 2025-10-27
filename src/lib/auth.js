@@ -36,7 +36,10 @@ export const authOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
-        console.log("SignIn callback:", { user: user?.email, account: account?.provider });
+        console.log("SignIn callback:", {
+          user: user?.email,
+          account: account?.provider,
+        });
         return true;
       } catch (error) {
         console.error("Erro no callback signIn:", error);

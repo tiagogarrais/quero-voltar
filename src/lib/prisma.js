@@ -16,7 +16,8 @@ if (process.env.NODE_ENV === "production") {
   prisma = global.prisma;
 
   // Teste de conexão em desenvolvimento
-  prisma.$connect()
+  prisma
+    .$connect()
     .then(() => console.log("✅ Banco de dados conectado"))
     .catch((error) => console.error("❌ Erro ao conectar ao banco:", error));
 }

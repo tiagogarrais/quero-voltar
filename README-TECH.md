@@ -310,11 +310,12 @@ model User {
 
 ---
 
-*Última atualização: Outubro 2025*
+_Última atualização: Outubro 2025_
 
 ## Debugging e Monitoramento
 
 ### Logs de Desenvolvimento
+
 - **NextAuth Debug**: Habilitado automaticamente em desenvolvimento
 - **Prisma Logging**: Queries, erros e warnings logados em dev
 - **Health Check**: Endpoint `/api/health` para verificar conectividade
@@ -322,30 +323,36 @@ model User {
 ### Troubleshooting de Autenticação
 
 #### Problema: "Try signing in with a different account"
+
 **Possíveis causas:**
+
 - Erro na criação do usuário no banco
 - Conflito com usuário existente
 - Problemas de conexão com o banco
 
 **Soluções:**
+
 1. Verificar logs do Vercel/NextAuth
 2. Testar endpoint `/api/health`
 3. Verificar variáveis de ambiente no Vercel
 4. Reset do banco se necessário
 
 #### Problema: "cached plan must not change result type"
+
 **Causa:** Inconsistência entre schema e banco
 **Solução:**
+
 ```bash
 npx prisma db push --force-reset
 npx prisma generate
 ```
 
 #### Verificação de Deploy
+
 1. **Health Check**: `GET /api/health`
 2. **Logs do Vercel**: Verificar function logs
 3. **Variáveis de Ambiente**: Confirmar todas configuradas
 4. **Banco**: Verificar conexão e tabelas</content>
-<parameter name="oldString">---
+   <parameter name="oldString">---
 
 Se quiser, eu crio agora os modelos Prisma para Lojas, Compras e Cupons e gero a migração (posso aplicar automaticamente se você confirmar).
