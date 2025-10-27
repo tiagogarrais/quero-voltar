@@ -4,9 +4,29 @@ import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import { sendVerificationRequest } from "@/lib/email";
+import { randomUUID } from "crypto";
+
+// Adapter customizado para garantir geração correta de UUIDs
+const CustomPrismaAdapter = (p) => {
+  const adapter = PrismaAdapter(p);
+
+  return {
+    ...adapter,
+    createUser: async (data) => {
+      console.log("Creating user with data:", data);
+      // Garantir que o ID seja gerado como UUID
+      const userData = {
+        ...data,
+        id: randomUUID(),
+      };
+      console.log("User data with ID:", userData);
+      return p.user.create({ data: userData });
+    },
+  };
+};
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: CustomPrismaAdapter(prisma),
   debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({
