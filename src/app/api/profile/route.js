@@ -90,9 +90,28 @@ export async function PUT(request) {
   }
 
   try {
-    const updatedUser = await prisma.user.update({
+    // Primeiro, garantir que existe um usuário na tabela User
+    const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      data: {
+    });
+
+    if (!user) {
+      return new Response("Usuário não encontrado", { status: 404 });
+    }
+
+    // Atualizar ou criar perfil na tabela Usuario
+    const updatedProfile = await prisma.usuario.upsert({
+      where: { userId: user.id },
+      update: {
+        fullName,
+        birthDate: new Date(birthDate),
+        cpf: cpfValue,
+        whatsapp,
+        whatsappCountryCode,
+        whatsappConsent,
+      },
+      create: {
+        userId: user.id,
         fullName,
         birthDate: new Date(birthDate),
         cpf: cpfValue,
@@ -101,16 +120,17 @@ export async function PUT(request) {
         whatsappConsent,
       },
     });
+
     return new Response(
       JSON.stringify({
         success: true,
         user: {
-          fullName: updatedUser.fullName,
-          birthDate: updatedUser.birthDate,
-          cpf: updatedUser.cpf,
-          whatsapp: updatedUser.whatsapp,
-          whatsappCountryCode: updatedUser.whatsappCountryCode,
-          whatsappConsent: updatedUser.whatsappConsent,
+          fullName: updatedProfile.fullName,
+          birthDate: updatedProfile.birthDate,
+          cpf: updatedProfile.cpf,
+          whatsapp: updatedProfile.whatsapp,
+          whatsappCountryCode: updatedProfile.whatsappCountryCode,
+          whatsappConsent: updatedProfile.whatsappConsent,
         },
       }),
       { status: 200 }
@@ -126,34 +146,32 @@ export async function GET(request) {
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   try {
+    // Primeiro, encontrar o usuário na tabela User
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: {
-        fullName: true,
-        birthDate: true,
-        cpf: true,
-        whatsapp: true,
-        whatsappCountryCode: true,
-        whatsappConsent: true,
-      },
     });
 
     if (!user) {
       return new Response("Usuário não encontrado", { status: 404 });
     }
 
+    // Buscar perfil na tabela Usuario
+    const profile = await prisma.usuario.findUnique({
+      where: { userId: user.id },
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         user: {
-          fullName: user.fullName || "",
-          birthDate: user.birthDate
-            ? user.birthDate.toISOString().split("T")[0]
+          fullName: profile?.fullName || "",
+          birthDate: profile?.birthDate
+            ? profile.birthDate.toISOString().split("T")[0]
             : "",
-          cpf: user.cpf || "",
-          whatsapp: user.whatsapp || "",
-          whatsappCountryCode: user.whatsappCountryCode || "55",
-          whatsappConsent: user.whatsappConsent || false,
+          cpf: profile?.cpf || "",
+          whatsapp: profile?.whatsapp || "",
+          whatsappCountryCode: profile?.whatsappCountryCode || "55",
+          whatsappConsent: profile?.whatsappConsent || false,
         },
       }),
       { status: 200 }

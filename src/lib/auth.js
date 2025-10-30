@@ -17,20 +17,32 @@ const CustomPrismaAdapter = (p) => {
       // Garantir que o ID seja gerado como UUID e seja uma string
       const userData = {
         ...data,
-        id: typeof data.id === 'string' ? data.id : randomUUID(),
+        id: typeof data.id === "string" ? data.id : randomUUID(),
       };
       console.log("User data with ID:", userData);
       console.log("ID type:", typeof userData.id, "ID value:", userData.id);
 
       // Verificar se o ID é realmente uma string UUID válida
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(userData.id)) {
         console.error("ID gerado não é um UUID válido:", userData.id);
         userData.id = randomUUID();
         console.log("Novo ID gerado:", userData.id);
       }
 
-      return p.user.create({ data: userData });
+      // Remover campos que não pertencem à tabela User (autenticação)
+      const {
+        fullName,
+        birthDate,
+        cpf,
+        whatsapp,
+        whatsappCountryCode,
+        whatsappConsent,
+        ...cleanUserData
+      } = userData;
+
+      return p.user.create({ data: cleanUserData });
     },
   };
 };
@@ -88,21 +100,21 @@ export const authOptions = {
             typeof token.id
           );
           session.user.id = token.id;
-          // Adicionar campos do perfil
+          // Adicionar campos do perfil da tabela Usuario
           try {
-            const user = await prisma.user.findUnique({
-              where: { id: token.id },
-              select: {
-                fullName: true,
-                birthDate: true,
-                cpf: true,
-                whatsapp: true,
-                whatsappCountryCode: true,
-                whatsappConsent: true,
-              },
+            const profile = await prisma.usuario.findUnique({
+              where: { userId: token.id },
             });
-            if (user) {
-              session.user = { ...session.user, ...user };
+            if (profile) {
+              session.user = {
+                ...session.user,
+                fullName: profile.fullName,
+                birthDate: profile.birthDate,
+                cpf: profile.cpf,
+                whatsapp: profile.whatsapp,
+                whatsappCountryCode: profile.whatsappCountryCode,
+                whatsappConsent: profile.whatsappConsent,
+              };
             }
           } catch (dbError) {
             console.error("Erro ao buscar dados do usuário no banco:", dbError);

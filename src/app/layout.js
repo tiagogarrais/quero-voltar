@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import "./globals.css";
 
 function Header() {
@@ -44,7 +44,7 @@ function Header() {
         </Link>
 
         <nav>
-          {session && (
+          {session ? (
             <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
               <Link
                 href="/profile"
@@ -73,6 +73,22 @@ function Header() {
                 Sair
               </button>
             </div>
+          ) : (
+            <button
+              onClick={() => signIn()}
+              style={{
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "500",
+              }}
+            >
+              Entrar
+            </button>
           )}
         </nav>
       </div>
