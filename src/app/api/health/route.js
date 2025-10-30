@@ -17,11 +17,17 @@ export async function GET() {
     let testUser = null;
     let testProfile = null;
     try {
+      // Forçar uso do schema atual
       testUser = await prisma.user.create({
         data: {
           name: 'Health Check User',
           email: `health-check-${Date.now()}@test.com`,
         },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        }
       });
 
       testProfile = await prisma.usuario.create({
@@ -29,9 +35,14 @@ export async function GET() {
           userId: testUser.id,
           fullName: 'Health Check Profile',
         },
+        select: {
+          id: true,
+          userId: true,
+          fullName: true,
+        }
       });
 
-      console.log('Health check: User created successfully', testUser.id, '- Force rebuild 2');
+      console.log('Health check: User created successfully', testUser.id, '- Force rebuild 3');
     } catch (createError) {
       console.error('Health check: Failed to create user', createError);
       return Response.json(
