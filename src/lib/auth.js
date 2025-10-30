@@ -4,45 +4,27 @@ import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import { sendVerificationRequest } from "@/lib/email";
-import { randomUUID } from "crypto";
 
-// Adapter customizado para garantir geração correta de UUIDs
+// Adapter customizado seguindo a documentação do PrismaAdapter
 const CustomPrismaAdapter = (p) => {
   const adapter = PrismaAdapter(p);
 
   return {
     ...adapter,
+    // Simplificar createUser para seguir a documentação
     createUser: async (data) => {
-      console.log("Creating user with data:", data);
-      // Garantir que o ID seja gerado como UUID e seja uma string
+      console.log("Criando usuário:", data);
+      // Usar apenas os campos que pertencem à tabela User
       const userData = {
-        ...data,
-        id: typeof data.id === "string" ? data.id : randomUUID(),
+        id: data.id || undefined, // Deixar o Prisma gerar se não fornecido
+        name: data.name,
+        email: data.email,
+        emailVerified: data.emailVerified,
+        image: data.image,
       };
-      console.log("User data with ID:", userData);
-      console.log("ID type:", typeof userData.id, "ID value:", userData.id);
 
-      // Verificar se o ID é realmente uma string UUID válida
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(userData.id)) {
-        console.error("ID gerado não é um UUID válido:", userData.id);
-        userData.id = randomUUID();
-        console.log("Novo ID gerado:", userData.id);
-      }
-
-      // Remover campos que não pertencem à tabela User (autenticação)
-      const {
-        fullName,
-        birthDate,
-        cpf,
-        whatsapp,
-        whatsappCountryCode,
-        whatsappConsent,
-        ...cleanUserData
-      } = userData;
-
-      return p.user.create({ data: cleanUserData });
+      console.log("Dados do usuário a serem criados:", userData);
+      return p.user.create({ data: userData });
     },
   };
 };
