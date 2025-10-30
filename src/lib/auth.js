@@ -5,32 +5,8 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import { sendVerificationRequest } from "@/lib/email";
 
-// Adapter customizado seguindo a documentação do PrismaAdapter
-const CustomPrismaAdapter = (p) => {
-  const adapter = PrismaAdapter(p);
-
-  return {
-    ...adapter,
-    // Simplificar createUser para seguir a documentação
-    createUser: async (data) => {
-      console.log("Criando usuário:", data);
-      // Usar apenas os campos que pertencem à tabela User
-      // Deixar o Prisma gerar o ID automaticamente (@default(uuid()))
-      const userData = {
-        name: data.name,
-        email: data.email,
-        emailVerified: data.emailVerified,
-        image: data.image,
-      };
-
-      console.log("Dados do usuário a serem criados:", userData);
-      return p.user.create({ data: userData });
-    },
-  };
-};
-
 export const authOptions = {
-  adapter: CustomPrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma), // Usar adapter padrão temporariamente
   debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({

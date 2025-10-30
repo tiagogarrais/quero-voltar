@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
@@ -13,7 +13,7 @@ export async function GET() {
     // Tentar criar um usuário de teste
     const testUser = await prisma.user.create({
       data: {
-        name: 'Test User',
+        name: "Test User",
         email: `test-${Date.now()}@example.com`,
       },
     });
@@ -22,13 +22,13 @@ export async function GET() {
     const testProfile = await prisma.usuario.create({
       data: {
         userId: testUser.id,
-        fullName: 'Test User Profile',
+        fullName: "Test User Profile",
       },
     });
 
     return NextResponse.json({
-      status: 'ok',
-      database: 'connected',
+      status: "ok",
+      database: "connected",
       userCount,
       usuarioCount,
       testUser: { id: testUser.id, email: testUser.email },
@@ -36,10 +36,10 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Database test error:', error);
+    console.error("Database test error:", error);
     return NextResponse.json(
       {
-        status: 'error',
+        status: "error",
         error: error.message,
         timestamp: new Date().toISOString(),
       },
