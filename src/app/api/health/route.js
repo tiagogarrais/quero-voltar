@@ -31,7 +31,7 @@ export async function GET() {
         },
       });
 
-      console.log('Health check: User created successfully', testUser.id);
+      console.log('Health check: User created successfully', testUser.id, '- Force rebuild 2');
     } catch (createError) {
       console.error('Health check: Failed to create user', createError);
       return Response.json(
