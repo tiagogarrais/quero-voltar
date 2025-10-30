@@ -15,8 +15,8 @@ const CustomPrismaAdapter = (p) => {
     createUser: async (data) => {
       console.log("Criando usuário:", data);
       // Usar apenas os campos que pertencem à tabela User
+      // Deixar o Prisma gerar o ID automaticamente (@default(uuid()))
       const userData = {
-        id: data.id || undefined, // Deixar o Prisma gerar se não fornecido
         name: data.name,
         email: data.email,
         emailVerified: data.emailVerified,
