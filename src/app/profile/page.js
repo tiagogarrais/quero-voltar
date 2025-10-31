@@ -47,7 +47,7 @@ export default function Profile() {
         if (res.ok) {
           const data = await res.json();
           setFormData({
-            fullName: data.user.fullName || session.user.name || "",
+            fullName: data.user.fullName || "",
             birthDate: data.user.birthDate || "",
             cpf: data.user.cpf || "",
             whatsapp: data.user.whatsapp || "",
@@ -57,27 +57,23 @@ export default function Profile() {
         } else {
           // Se não conseguir buscar, usar dados da sessão como fallback
           setFormData({
-            fullName: session.user.fullName || session.user.name || "",
-            birthDate: session.user.birthDate
-              ? new Date(session.user.birthDate).toISOString().split("T")[0]
-              : "",
-            cpf: session.user.cpf || "",
-            whatsapp: session.user.whatsapp || "",
-            whatsappCountryCode: session.user.whatsappCountryCode || "55",
-            whatsappConsent: session.user.whatsappConsent || false,
+            fullName: "",
+            birthDate: "",
+            cpf: "",
+            whatsapp: "",
+            whatsappCountryCode: "55",
+            whatsappConsent: false,
           });
         }
       } catch (error) {
         console.error("Erro ao buscar perfil:", error);
         // Fallback para dados da sessão
         setFormData({
-          fullName: session.user.fullName || session.user.name || "",
-          birthDate: session.user.birthDate
-            ? new Date(session.user.birthDate).toISOString().split("T")[0]
-            : "",
-          cpf: session.user.cpf || "",
-          whatsapp: session.user.whatsapp || "",
-          whatsappConsent: session.user.whatsappConsent || false,
+          fullName: "",
+          birthDate: "",
+          cpf: "",
+          whatsapp: "",
+          whatsappConsent: false,
         });
       }
     };
@@ -113,6 +109,37 @@ export default function Profile() {
       }
     }
     setLoading(false);
+  };
+
+  const handleRemoveProfile = async () => {
+    if (
+      !confirm(
+        "Tem certeza que deseja remover seu perfil? Esta ação não pode ser desfeita."
+      )
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/profile", {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Perfil removido com sucesso!");
+        router.push("/");
+      } else {
+        alert(data.error || "Erro ao remover perfil");
+      }
+    } catch (error) {
+      console.error("Erro ao remover perfil:", error);
+      alert("Erro ao remover perfil");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (status === "loading") return <p>Carregando...</p>;
@@ -173,7 +200,7 @@ export default function Profile() {
           <strong>Por favor, corrija os seguintes erros:</strong>
           <ul style={{ margin: "8px 0 0 20px", padding: 0 }}>
             {errors.map((error, index) => (
-              <li key={index} style={{ marginBottom: 4 }}>
+              <li key={`${error}-${index}`} style={{ marginBottom: 4 }}>
                 {error}
               </li>
             ))}
@@ -240,8 +267,8 @@ export default function Profile() {
               }
               style={{ padding: 8, minWidth: 120 }}
             >
-              {countries.map((country) => (
-                <option key={country.ddi} value={country.ddi}>
+              {countries.map((country, index) => (
+                <option key={`${country.ddi}-${index}`} value={country.ddi}>
                   +{country.ddi} {country.pais}
                 </option>
               ))}
@@ -282,20 +309,39 @@ export default function Profile() {
           />
           Concordo em receber comunicações via WhatsApp
         </label>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: 12,
-            backgroundColor: loading ? "#ccc" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Salvando..." : "Salvar Perfil"}
-        </button>
+        <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: 12,
+              backgroundColor: loading ? "#ccc" : "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              cursor: loading ? "not-allowed" : "pointer",
+              flex: 1,
+            }}
+          >
+            {loading ? "Salvando..." : "Salvar Perfil"}
+          </button>
+          <button
+            type="button"
+            onClick={handleRemoveProfile}
+            disabled={loading}
+            style={{
+              padding: 12,
+              backgroundColor: loading ? "#ccc" : "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              cursor: loading ? "not-allowed" : "pointer",
+              flex: 1,
+            }}
+          >
+            {loading ? "Processando..." : "Remover cadastro"}
+          </button>
+        </div>
       </form>
     </div>
   );

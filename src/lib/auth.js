@@ -48,20 +48,43 @@ export const authOptions = {
         return false;
       }
     },
-    async session({ session, token }) {
+    async session({ session, token, user }) {
       try {
-        if (token && token.id) {
-          console.log(
-            "Session callback - token.id:",
-            token.id,
-            "type:",
-            typeof token.id
-          );
+        // Primeiro tentar pegar o ID do token
+        if (token && token.sub) {
+          console.log("Session callback - token.sub:", token.sub);
+          session.user.id = token.sub;
+        } else if (token && token.id) {
+          console.log("Session callback - token.id:", token.id);
           session.user.id = token.id;
-          // Adicionar campos do perfil da tabela Usuario
+        } else if (user && user.id) {
+          console.log("Session callback - user.id:", user.id);
+          session.user.id = user.id;
+        }
+
+        // Se ainda não temos ID, tentar buscar do banco
+        if (!session.user.id && session.user.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: session.user.email },
+              select: { id: true },
+            });
+            if (dbUser) {
+              console.log("Session callback - dbUser.id:", dbUser.id);
+              session.user.id = dbUser.id;
+            }
+          } catch (dbError) {
+            console.error("Erro ao buscar ID do usuário no banco:", dbError);
+          }
+        }
+
+        console.log("Session final user ID:", session.user.id);
+
+        // Adicionar campos do perfil da tabela Usuario
+        if (session.user.id) {
           try {
             const profile = await prisma.usuario.findUnique({
-              where: { userId: token.id },
+              where: { userId: session.user.id },
             });
             if (profile) {
               session.user = {
@@ -86,22 +109,42 @@ export const authOptions = {
         return session;
       }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       try {
         if (user) {
-          console.log(
-            "JWT callback - user.id:",
-            user.id,
-            "type:",
-            typeof user.id
-          );
+          console.log("JWT callback - user.id:", user.id, "user object:", user);
           token.id = user.id;
         }
+
+        // Se não temos ID no token mas temos email, buscar do banco
+        if (!token.id && token.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: token.email },
+              select: { id: true },
+            });
+            if (dbUser) {
+              console.log("JWT callback - found user ID from DB:", dbUser.id);
+              token.id = dbUser.id;
+            }
+          } catch (dbError) {
+            console.error(
+              "Erro ao buscar ID do usuário no JWT callback:",
+              dbError
+            );
+          }
+        }
+
+        console.log("JWT final token.id:", token.id);
         return token;
       } catch (error) {
         console.error("Erro no callback JWT:", error);
         return token;
       }
+    },
+    redirect: async ({ url, baseUrl }) => {
+      // Após login, redirecionar para a página inicial (que agora é a welcome)
+      return baseUrl;
     },
   },
 };
