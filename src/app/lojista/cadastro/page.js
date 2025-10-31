@@ -13,12 +13,18 @@ export default function CadastroLoja() {
   const [lojaData, setLojaData] = useState(null);
   const [formData, setFormData] = useState({
     cnpj: "",
+    nomeEmpresa: "",
     cidade: "",
     estado: "",
     nomeResponsavel: "",
     telefoneResponsavel: "",
+    foto: null,
   });
   const [errors, setErrors] = useState({});
+
+  // Estados para controle do upload de imagem
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Estados para controle dos dropdowns de estado e cidade
   const [selectedEstado, setSelectedEstado] = useState("");
@@ -60,13 +66,19 @@ export default function CadastroLoja() {
         setLojaData(data.loja);
         setFormData({
           cnpj: data.loja.cnpj || "",
+          nomeEmpresa: data.loja.nomeEmpresa || "",
           cidade: data.loja.cidade || "",
           estado: data.loja.estado || "",
           nomeResponsavel: data.loja.nomeResponsavel || "",
           telefoneResponsavel: data.loja.telefoneResponsavel || "",
+          foto: data.loja.foto || null,
         });
         // Inicializar estado selecionado para carregar cidades
         setSelectedEstado(data.loja.estado || "");
+        // Inicializar preview da imagem se existir
+        if (data.loja.foto) {
+          setImagePreview(data.loja.foto);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar dados da loja:", error);
@@ -179,6 +191,62 @@ export default function CadastroLoja() {
     }
   };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          foto: "Por favor, selecione uma imagem válida",
+        }));
+        return;
+      }
+
+      // Validar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          foto: "A imagem deve ter no máximo 5MB",
+        }));
+        return;
+      }
+
+      setSelectedImage(file);
+
+      // Criar preview da imagem e converter para base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target.result;
+
+        // Verificar aspect ratio
+        const img = new Image();
+        img.onload = () => {
+          if (img.width !== img.height) {
+            setErrors((prev) => ({
+              ...prev,
+              foto: "A imagem deve ter proporção quadrada (1:1)",
+            }));
+            setSelectedImage(null);
+            setImagePreview(null);
+            setFormData((prev) => ({ ...prev, foto: null }));
+            return;
+          }
+
+          setImagePreview(base64);
+          setFormData((prev) => ({ ...prev, foto: base64 }));
+        };
+        img.src = base64;
+      };
+      reader.readAsDataURL(file);
+
+      // Limpar erro
+      if (errors.foto) {
+        setErrors((prev) => ({ ...prev, foto: null }));
+      }
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -188,6 +256,13 @@ export default function CadastroLoja() {
       newErrors.cnpj = "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX";
     } else if (!validateCNPJ(formData.cnpj)) {
       newErrors.cnpj = "CNPJ inválido";
+    }
+
+    if (!formData.nomeEmpresa.trim()) {
+      newErrors.nomeEmpresa = "Nome da empresa é obrigatório";
+    } else if (formData.nomeEmpresa.trim().length < 2) {
+      newErrors.nomeEmpresa =
+        "Nome da empresa deve ter pelo menos 2 caracteres";
     }
 
     if (!formData.cidade.trim()) {
@@ -211,6 +286,17 @@ export default function CadastroLoja() {
     ) {
       newErrors.telefoneResponsavel =
         "Telefone deve estar no formato (XX) XXXXX-XXXX";
+    }
+
+    if (!formData.nomeEmpresa.trim()) {
+      newErrors.nomeEmpresa = "Nome da empresa é obrigatório";
+    } else if (formData.nomeEmpresa.trim().length < 2) {
+      newErrors.nomeEmpresa =
+        "Nome da empresa deve ter pelo menos 2 caracteres";
+    }
+
+    if (!selectedImage) {
+      newErrors.foto = "Foto da empresa é obrigatória";
     }
 
     setErrors(newErrors);
@@ -404,6 +490,57 @@ export default function CadastroLoja() {
               <span className="error-message">
                 {errors.telefoneResponsavel}
               </span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="nomeEmpresa">Nome da Empresa *</label>
+            <input
+              type="text"
+              id="nomeEmpresa"
+              value={formData.nomeEmpresa}
+              onChange={(e) => handleInputChange("nomeEmpresa", e.target.value)}
+              placeholder="Digite o nome da empresa"
+              className={errors.nomeEmpresa ? "error" : ""}
+            />
+            {errors.nomeEmpresa && (
+              <span className="error-message">{errors.nomeEmpresa}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="foto">Foto da Empresa (1:1) *</label>
+            <div className="image-upload-container">
+              <input
+                type="file"
+                id="foto"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="image-input"
+                style={{ display: "none" }}
+              />
+              <label htmlFor="foto" className="image-upload-label">
+                {imagePreview ? (
+                  <div className="image-preview">
+                    <img
+                      src={imagePreview}
+                      alt="Preview da foto"
+                      className="preview-image"
+                    />
+                    <div className="preview-overlay">
+                      <span>Clique para alterar</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="upload-placeholder">
+                    <span>📷 Clique para adicionar foto</span>
+                    <small>Formato quadrado (1:1), até 5MB</small>
+                  </div>
+                )}
+              </label>
+            </div>
+            {errors.foto && (
+              <span className="error-message">{errors.foto}</span>
             )}
           </div>
 

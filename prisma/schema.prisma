@@ -67,10 +67,12 @@ model Loja {
   id                String   @id @default(uuid())
   userId            String   @unique // Relacionamento 1:1 com User
   cnpj              String?  @unique // CNPJ da loja
+  nomeEmpresa       String   // Nome fantasia da empresa (obrigatório)
   cidade            String?  // Cidade da loja
   estado            String?  // Estado da loja
   nomeResponsavel   String?  // Nome completo do responsável
   telefoneResponsavel String? // Telefone do responsável
+  foto              String?  // Caminho/URL da foto da empresa (proporção 1:1)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
