@@ -3,6 +3,8 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import CouponModal from "../../components/CouponModal";
+import CouponList from "../../components/CouponList";
 
 export default function LojistaDashboard() {
   const { data: session, status } = useSession();
@@ -15,6 +17,8 @@ export default function LojistaDashboard() {
   });
   const [lojaData, setLojaData] = useState(null);
   const [checkingLoja, setCheckingLoja] = useState(true);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [couponRefreshTrigger, setCouponRefreshTrigger] = useState(0);
 
   const checkLojaData = async () => {
     try {
@@ -58,6 +62,19 @@ export default function LojistaDashboard() {
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
+  };
+
+  const handleCouponCreated = (newCoupon) => {
+    // Update stats if needed
+    setStats((prev) => ({
+      ...prev,
+      cuponsAtivos: prev.cuponsAtivos + 1,
+    }));
+
+    // Refresh coupon list
+    setCouponRefreshTrigger((prev) => prev + 1);
+
+    console.log("Novo cupom criado:", newCoupon);
   };
 
   if (status === "loading" || checkingLoja) {
@@ -140,7 +157,10 @@ export default function LojistaDashboard() {
             <span>Nova Compra</span>
           </button>
 
-          <button className="action-btn secondary">
+          <button
+            className="action-btn secondary"
+            onClick={() => setShowCouponModal(true)}
+          >
             <span className="action-icon">🎫</span>
             <span>Gerar Cupom</span>
           </button>
@@ -192,6 +212,16 @@ export default function LojistaDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Coupon List */}
+      <CouponList refreshTrigger={couponRefreshTrigger} />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={() => setShowCouponModal(false)}
+        onCouponCreated={handleCouponCreated}
+      />
     </div>
   );
 }

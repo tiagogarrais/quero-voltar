@@ -75,6 +75,25 @@ model Loja {
   updatedAt         DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cupons Cupom[] // Cupons gerados pela loja
+}
+
+model Cupom {
+  id                String   @id @default(uuid())
+  lojaId            String   // ID da loja que gerou o cupom
+  codigo            String   @unique // Código único do cupom
+  tipo              String   // 'valor', 'percentual', 'brinde'
+  valor             Float?   // Valor do desconto (para tipo 'valor' ou 'percentual')
+  descricao         String?  // Descrição do brinde (para tipo 'brinde')
+  quantidade        Int      // Quantidade de cupons a gerar
+  validadeDias      Int      // Dias de validade a partir da criação
+  dataExpiracao     DateTime // Data de expiração calculada
+  visivel           Boolean  @default(true) // Se o cupom está visível para clientes
+  status            String   @default("ativo") // 'ativo', 'usado', 'expirado'
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  loja Loja @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
