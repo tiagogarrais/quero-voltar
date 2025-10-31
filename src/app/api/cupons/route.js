@@ -27,6 +27,11 @@ export async function GET(request) {
       },
       include: {
         loja: true,
+        cuponsIndividuais: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -117,8 +122,8 @@ export async function POST(request) {
 
     // Generate unique coupon code
     const generateCouponCode = () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let result = '';
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
       for (let i = 0; i < 8; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
@@ -150,7 +155,7 @@ export async function POST(request) {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + parseInt(validityDays));
 
-    // Create the coupon
+    // Create the coupon template
     const coupon = await prisma.cupom.create({
       data: {
         lojaId: loja.id,
@@ -166,7 +171,48 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json(coupon, { status: 201 });
+    // Generate individual coupons
+    const individualCoupons = [];
+    for (let i = 0; i < parseInt(quantity); i++) {
+      let individualCode;
+      let codeExists = true;
+      let attempts = 0;
+
+      // Generate unique code for each individual coupon
+      while (codeExists && attempts < 10) {
+        individualCode = `${couponCode}-${String(i + 1).padStart(3, "0")}`;
+        const existingIndividual = await prisma.cupomIndividual.findUnique({
+          where: { codigo: individualCode },
+        });
+        codeExists = !!existingIndividual;
+        attempts++;
+      }
+
+      if (codeExists) {
+        // If we can't generate a unique code, skip this individual coupon
+        continue;
+      }
+
+      const individualCoupon = await prisma.cupomIndividual.create({
+        data: {
+          cupomId: coupon.id,
+          codigo: individualCode,
+          dataExpiracao: expirationDate,
+          status: "disponivel",
+        },
+      });
+
+      individualCoupons.push(individualCoupon);
+    }
+
+    return NextResponse.json(
+      {
+        coupon,
+        individualCoupons,
+        message: `${individualCoupons.length} cupons individuais criados com sucesso`,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating coupon:", error);
     return NextResponse.json(
@@ -281,7 +327,8 @@ export async function PUT(request) {
     const updateData = {};
     if (discountType !== undefined) updateData.tipo = discountType;
     if (discountValue !== undefined) {
-      updateData.valor = discountType === "BRINDE" ? null : parseFloat(discountValue);
+      updateData.valor =
+        discountType === "BRINDE" ? null : parseFloat(discountValue);
       updateData.descricao = discountType === "BRINDE" ? discountValue : null;
     }
     if (quantity !== undefined) updateData.quantidade = parseInt(quantity);

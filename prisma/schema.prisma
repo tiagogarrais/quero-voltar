@@ -81,7 +81,7 @@ model Loja {
 model Cupom {
   id                String   @id @default(uuid())
   lojaId            String   // ID da loja que gerou o cupom
-  codigo            String   @unique // Código único do cupom
+  codigo            String   @unique // Código único do cupom (template)
   tipo              String   // 'valor', 'percentual', 'brinde'
   valor             Float?   // Valor do desconto (para tipo 'valor' ou 'percentual')
   descricao         String?  // Descrição do brinde (para tipo 'brinde')
@@ -94,6 +94,26 @@ model Cupom {
   updatedAt         DateTime @updatedAt
 
   loja Loja @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  cuponsIndividuais CupomIndividual[] // Cupons individuais gerados a partir deste template
+}
+
+model CupomIndividual {
+  id                String   @id @default(uuid())
+  cupomId           String   // ID do cupom template
+  codigo            String   @unique // Código único do cupom individual
+  telefone          String?  // Telefone do cliente (opcional)
+  cpf               String?  @unique // CPF do cliente (opcional e único)
+  email             String?  @unique // E-mail do cliente (opcional e único)
+  dataAtribuicao    DateTime? // Data em que foi atribuído ao cliente
+  status            String   @default("disponivel") // 'disponivel', 'usado', 'expirado'
+  dataExpiracao     DateTime // Data de expiração calculada
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  cupom Cupom @relation(fields: [cupomId], references: [id], onDelete: Cascade)
+
+  @@unique([cupomId, telefone]) // Um telefone pode ter apenas um cupom por template
+  @@unique([cupomId, email]) // Um email pode ter apenas um cupom por template
 }
 
 model VerificationToken {
