@@ -52,8 +52,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { cnpj, cidade, estado, nomeResponsavel, telefoneResponsavel } =
-      await request.json();
+    const {
+      cnpj,
+      cidade,
+      estado,
+      nomeResponsavel,
+      telefoneResponsavel,
+      nomeEmpresa,
+      foto,
+    } = await request.json();
 
     // Validações básicas
     if (
@@ -61,7 +68,8 @@ export async function POST(request) {
       !cidade ||
       !estado ||
       !nomeResponsavel ||
-      !telefoneResponsavel
+      !telefoneResponsavel ||
+      !nomeEmpresa
     ) {
       const missingFields = [];
       if (!cnpj) missingFields.push("cnpj");
@@ -69,6 +77,7 @@ export async function POST(request) {
       if (!estado) missingFields.push("estado");
       if (!nomeResponsavel) missingFields.push("nomeResponsavel");
       if (!telefoneResponsavel) missingFields.push("telefoneResponsavel");
+      if (!nomeEmpresa) missingFields.push("nomeEmpresa");
 
       return NextResponse.json(
         {
@@ -108,6 +117,8 @@ export async function POST(request) {
       estado: String(estado).trim(),
       nomeResponsavel: String(nomeResponsavel).trim(),
       telefoneResponsavel: String(telefoneResponsavel).trim(),
+      nomeEmpresa: String(nomeEmpresa).trim(),
+      foto: foto ? String(foto).trim() : null,
     };
 
     const loja = await prisma.loja.upsert({
@@ -134,6 +145,8 @@ export async function POST(request) {
         estado: loja.estado,
         nomeResponsavel: loja.nomeResponsavel,
         telefoneResponsavel: loja.telefoneResponsavel,
+        nomeEmpresa: loja.nomeEmpresa,
+        foto: loja.foto,
       },
     });
   } catch (error) {
@@ -183,6 +196,8 @@ export async function GET(request) {
         estado: true,
         nomeResponsavel: true,
         telefoneResponsavel: true,
+        nomeEmpresa: true,
+        foto: true,
         createdAt: true,
         updatedAt: true,
       },

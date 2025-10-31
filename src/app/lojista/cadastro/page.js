@@ -390,6 +390,21 @@ export default function CadastroLoja() {
 
         <form onSubmit={handleSubmit} className="cadastro-form">
           <div className="form-group">
+            <label htmlFor="nomeEmpresa">Nome da Empresa *</label>
+            <input
+              type="text"
+              id="nomeEmpresa"
+              value={formData.nomeEmpresa}
+              onChange={(e) => handleInputChange("nomeEmpresa", e.target.value)}
+              placeholder="Digite o nome da empresa"
+              className={errors.nomeEmpresa ? "error" : ""}
+            />
+            {errors.nomeEmpresa && (
+              <span className="error-message">{errors.nomeEmpresa}</span>
+            )}
+          </div>
+
+          <div className="form-group">
             <label htmlFor="cnpj">CNPJ *</label>
             <input
               type="text"
@@ -490,21 +505,6 @@ export default function CadastroLoja() {
               <span className="error-message">
                 {errors.telefoneResponsavel}
               </span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="nomeEmpresa">Nome da Empresa *</label>
-            <input
-              type="text"
-              id="nomeEmpresa"
-              value={formData.nomeEmpresa}
-              onChange={(e) => handleInputChange("nomeEmpresa", e.target.value)}
-              placeholder="Digite o nome da empresa"
-              className={errors.nomeEmpresa ? "error" : ""}
-            />
-            {errors.nomeEmpresa && (
-              <span className="error-message">{errors.nomeEmpresa}</span>
             )}
           </div>
 

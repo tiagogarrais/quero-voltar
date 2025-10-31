@@ -1626,7 +1626,7 @@ button {
 
 .image-upload-label {
   display: block;
-  width: 100%;
+  width: 200px;
   height: 200px;
   border: 2px dashed #cbd5e0;
   border-radius: 12px;
@@ -1637,6 +1637,7 @@ button {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  margin: 0 auto; /* Centralizar horizontalmente */
 }
 
 .image-upload-label:hover {
@@ -1798,6 +1799,7 @@ button {
   }
 
   .image-upload-label {
+    width: 150px;
     height: 150px;
   }
 }
