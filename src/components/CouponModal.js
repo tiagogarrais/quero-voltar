@@ -97,7 +97,7 @@ export default function CouponModal({ isOpen, onClose, onCouponCreated }) {
           isVisible: true,
         });
       } else {
-        setErrors({ submit: data.error || "Erro ao criar cupom" });
+        setErrors({ submit: data.error || "Erro ao criar campanha" });
       }
     } catch (error) {
       console.error("Error creating coupon:", error);
@@ -116,7 +116,7 @@ export default function CouponModal({ isOpen, onClose, onCouponCreated }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>🎫 Gerar Novo Cupom</h2>
+          <h2>🎫 Criar Nova Campanha</h2>
           <button className="modal-close" onClick={onClose}>
             ×
           </button>

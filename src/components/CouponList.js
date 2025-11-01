@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export default function CouponList({ refreshTrigger }) {
+export default function CouponList({ refreshTrigger, onStatsUpdate }) {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,6 +20,37 @@ export default function CouponList({ refreshTrigger }) {
       if (response.ok) {
         setCoupons(data);
         setError(null);
+
+        // Calcular estatísticas dos cupons
+        const cuponsAtivos = data.filter(
+          (coupon) =>
+            coupon.cuponsIndividuais &&
+            coupon.cuponsIndividuais.some((ci) => !ci.usado)
+        ).length;
+
+        const cuponsUsados = data.reduce(
+          (total, coupon) =>
+            total +
+            (coupon.cuponsIndividuais?.filter((ci) => ci.usado).length || 0),
+          0
+        );
+
+        const cuponsIndividuaisAtivos = data.reduce(
+          (total, coupon) =>
+            total +
+            (coupon.cuponsIndividuais?.filter((ci) => !ci.usado).length || 0),
+          0
+        );
+
+        // Chamar callback com as estatísticas
+        if (onStatsUpdate) {
+          onStatsUpdate({
+            cuponsAtivos,
+            cuponsUsados,
+            cuponsIndividuaisAtivos,
+            totalCupons: data.length,
+          });
+        }
       } else {
         setError(data.error || "Erro ao carregar cupons");
       }
@@ -154,9 +185,9 @@ export default function CouponList({ refreshTrigger }) {
     return (
       <div className="coupon-list-empty">
         <div className="empty-icon">🎫</div>
-        <h3>Nenhum cupom criado ainda</h3>
+        <h3>Nenhuma campanha criada ainda</h3>
         <p>
-          Crie seu primeiro cupom para começar a oferecer descontos aos seus
+          Crie sua primeira campanha para começar a oferecer descontos aos seus
           clientes!
         </p>
       </div>
@@ -166,7 +197,7 @@ export default function CouponList({ refreshTrigger }) {
   return (
     <div className="coupon-list">
       <div className="coupon-list-header">
-        <h3>Seus Cupons ({coupons.length})</h3>
+        <h3>Suas Campanhas ({coupons.length})</h3>
       </div>
 
       <div className="coupon-grid">

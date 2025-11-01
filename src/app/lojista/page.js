@@ -10,10 +10,9 @@ export default function LojistaDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState({
-    totalCompras: 0,
     cuponsAtivos: 0,
     cuponsUsados: 0,
-    receitaTotal: 0,
+    cuponsIndividuaisAtivos: 0,
   });
   const [lojaData, setLojaData] = useState(null);
   const [checkingLoja, setCheckingLoja] = useState(true);
@@ -27,14 +26,7 @@ export default function LojistaDashboard() {
 
       if (data.success && data.loja) {
         setLojaData(data.loja);
-        // Aqui você pode carregar estatísticas da loja
-        // Por enquanto, dados mockados
-        setStats({
-          totalCompras: 45,
-          cuponsAtivos: 23,
-          cuponsUsados: 12,
-          receitaTotal: 2850.5,
-        });
+        // Estatísticas serão atualizadas pelo componente CouponList
       } else {
         // Se não há dados da loja, redirecionar para cadastro
         router.push("/lojista/cadastro");
@@ -65,16 +57,19 @@ export default function LojistaDashboard() {
   };
 
   const handleCouponCreated = (newCoupon) => {
-    // Update stats if needed
-    setStats((prev) => ({
-      ...prev,
-      cuponsAtivos: prev.cuponsAtivos + 1,
-    }));
-
-    // Refresh coupon list
+    // Refresh coupon list - as estatísticas serão atualizadas automaticamente pelo callback
     setCouponRefreshTrigger((prev) => prev + 1);
 
     console.log("Novo cupom criado:", newCoupon);
+  };
+
+  const handleStatsUpdate = (couponStats) => {
+    setStats((prev) => ({
+      ...prev,
+      cuponsAtivos: couponStats.cuponsAtivos,
+      cuponsUsados: couponStats.cuponsUsados,
+      cuponsIndividuaisAtivos: couponStats.cuponsIndividuaisAtivos,
+    }));
   };
 
   if (status === "loading" || checkingLoja) {
@@ -112,22 +107,13 @@ export default function LojistaDashboard() {
           </div>
         </div>
       </header>
-
       {/* Stats Cards */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">🛒</div>
-          <div className="stat-info">
-            <h3>{stats.totalCompras}</h3>
-            <p>Total de Compras</p>
-          </div>
-        </div>
-
         <div className="stat-card">
           <div className="stat-icon">🎫</div>
           <div className="stat-info">
             <h3>{stats.cuponsAtivos}</h3>
-            <p>Cupons Ativos</p>
+            <p>Campanhas Ativas</p>
           </div>
         </div>
 
@@ -140,14 +126,13 @@ export default function LojistaDashboard() {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon">🎟️</div>
           <div className="stat-info">
-            <h3>R$ {stats.receitaTotal.toFixed(2)}</h3>
-            <p>Receita Total</p>
+            <h3>{stats.cuponsIndividuaisAtivos}</h3>
+            <p>Cupons</p>
           </div>
         </div>
       </div>
-
       {/* Quick Actions */}
       <div className="quick-actions">
         <h2>Ações Rápidas</h2>
@@ -162,7 +147,7 @@ export default function LojistaDashboard() {
             onClick={() => setShowCouponModal(true)}
           >
             <span className="action-icon">🎫</span>
-            <span>Gerar Cupom</span>
+            <span>Criar Campanha</span>
           </button>
 
           <button className="action-btn tertiary">
@@ -176,7 +161,6 @@ export default function LojistaDashboard() {
           </button>
         </div>
       </div>
-
       {/* Recent Activity */}
       <div className="recent-activity">
         <h2>Atividades Recentes</h2>
@@ -195,7 +179,7 @@ export default function LojistaDashboard() {
             <div className="activity-icon">🎫</div>
             <div className="activity-content">
               <p>
-                Cupom <strong>CUPOM10</strong> foi utilizado por Maria Santos
+                Código <strong>CUPOM10</strong> foi utilizado por Maria Santos
               </p>
               <span className="activity-time">Há 4 horas</span>
             </div>
@@ -205,17 +189,18 @@ export default function LojistaDashboard() {
             <div className="activity-icon">➕</div>
             <div className="activity-content">
               <p>
-                Novo cupom <strong>DESCONTO20</strong> criado
+                Nova campanha <strong>DESCONTO20</strong> criada
               </p>
               <span className="activity-time">Há 1 dia</span>
             </div>
           </div>
         </div>
       </div>
-
       {/* Coupon List */}
-      <CouponList refreshTrigger={couponRefreshTrigger} />
-
+      <CouponList
+        refreshTrigger={couponRefreshTrigger}
+        onStatsUpdate={handleStatsUpdate}
+      />{" "}
       {/* Coupon Modal */}
       <CouponModal
         isOpen={showCouponModal}
